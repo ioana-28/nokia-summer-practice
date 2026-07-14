@@ -22,6 +22,10 @@ const DeviceTable = () => {
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
     const [selectedAction, setSelectedAction] = useState(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isEdit, setIsEdit] = useState(null);
+    const [deviceToEdit, setDeviceToEdit] = useState(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [deviceToDelete, setDeviceToDelete] = useState(null);
 
     const fetchDevices = async () => {
         try {
@@ -52,21 +56,38 @@ const DeviceTable = () => {
         setSelectedDevice(null);
     };
 
+    const handleDeleteDevice = async (deviceId) => {
+        try {
+            const response = await fetch(`/api/device/${deviceId}`, {
+                method: "DELETE",
+            });
+            if (response.ok) 
+                fetchDevices();
+        }
+        catch (error) {
+            console.error("Error deleting device:", error);
+        }
+    }
+
     const handleAction = (action, device) => {
         switch (action) {
             case "schedule":
-                handleScheduleOpen(device);
+                setIsScheduleDialogOpen(true);
+                setSelectedAction("schedule");
                 break;
             case "edit":
-                // Handle edit action
+                setDeviceToEdit(device);
+                setIsAddDialogOpen(true);
                 break;
             case "remove":
-                // Handle remove action
+                setDeviceToDelete(device);
+                setIsDeleteDialogOpen(true);
                 break;
             default:
                 break;
         }
     };
+
 
     const columns = useMemo(
         () => [
@@ -166,10 +187,19 @@ const DeviceTable = () => {
 
     const handleAddDialogClose = () => {
         setIsAddDialogOpen(false);
+        setDeviceToEdit(null);
     };
 
     const handleAddDeviceSuccess = () => {
         fetchDevices();
+    };
+
+    const confirmDelete = async () => {
+        if (deviceToDelete) {
+            await handleDeleteDevice(deviceToDelete._id.$oid || deviceToDelete._id);
+            setIsDeleteDialogOpen(false);
+            setDeviceToDelete(null);
+        }
     };
 
     return (
@@ -193,7 +223,22 @@ const DeviceTable = () => {
                 open={isAddDialogOpen}
                 onClose={handleAddDialogClose}
                 onSuccess={handleAddDeviceSuccess}
+                deviceToEdit={deviceToEdit}
             />
+            <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete the device "{deviceToDelete?.deviceName}"?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={confirmDelete} color="error">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
     Alert,
@@ -35,10 +35,8 @@ const initialFormData = {
 /**
  * @param {{ open: boolean, onClose: () => void, onSuccess?: (createdDevice: unknown) => void }} props
  */
-const AddDeviceForm = ({ open, onClose, onSuccess }) => {
-    const [formData, setFormData] = useState({
-        ...initialFormData,
-    });
+const AddDeviceForm = ({ open, onClose, onSuccess, deviceToEdit}) => {
+    const [formData, setFormData] = useState(deviceToEdit || initialFormData);
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,52 +54,52 @@ const AddDeviceForm = ({ open, onClose, onSuccess }) => {
         onClose();
     };
 
+    useEffect(() => {
+        setFormData(deviceToEdit || initialFormData);
+    }, [deviceToEdit, open]);
+
     /** @param {import('react').FormEvent<HTMLFormElement>} e */
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setError("");
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError("");
 
-        try {
-            const response = await fetch("/api/device", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
+    const isEdit = !!deviceToEdit;
+    const url = isEdit ? `/api/device/${deviceToEdit._id.$oid || deviceToEdit._id}` : "/api/device";
+    const method = isEdit ? "PUT" : "POST";
 
-            if (!response.ok) {
-                throw new Error(`Request failed: ${response.status}`);
-            }
 
-            let createdDevice = null;
-            try {
-                createdDevice = await response.json();
-            } catch {
-                createdDevice = null;
-            }
+    const submissionData = { ...formData };
+    delete submissionData._id; 
 
-            setFormData({ ...initialFormData });
-            if (onSuccess) {
-                onSuccess(createdDevice);
-            }
-            onClose();
-        } catch (error) {
-            if (error instanceof Error) {
-                setError(error.message || "Failed to add device.");
-            } else {
-                setError("Failed to add device.");
-            }
-        } finally {
-            setIsSubmitting(false);
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(submissionData),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
         }
-    };
+
+        if (onSuccess) {
+            onSuccess();
+        }
+        onClose();
+    } catch (error) {
+        setError(error.message || "Failed to save device.");
+    } finally {
+        setIsSubmitting(false);
+    }
+};
 
     return (
         <DockedDialog
             open={open}
             onClose={handleDialogClose}
         >
-            <DialogTitle>Add Device</DialogTitle>
+            <DialogTitle>{deviceToEdit ? "Edit Device" : "Add Device"}</DialogTitle>
             <DialogContent dividers>
                 {error && <Alert severity="error">{error}</Alert>}
                 <Stack component="form" id="add-device-form" onSubmit={handleSubmit} direction="row" spacing={2}>
