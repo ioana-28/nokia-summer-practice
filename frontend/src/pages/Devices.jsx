@@ -11,7 +11,13 @@ import {
     Divider,
     Box,
     TextField,
-    Select
+    Select,
+    FormControl,
+    FormLabel,
+    RadioGroup,
+    FormControlLabel,
+    Radio,
+    Stack
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
@@ -247,86 +253,283 @@ const DeviceTable = () => {
         }
     };
 
-    return (
-        <Container maxWidth={false} disableGutters>
-            <PageHeader title="Devices" breadcrumbItems={["Home", "Devices"]} />
-            <MaterialReactTable table={table} />
-            <Dialog open={isScheduleDialogOpen} onClose={handleScheduleClose}>
-                <DialogTitle>Schedule Action</DialogTitle>
-                <DialogContent dividers>
-                    <Typography variant="h6">Current Schedules</Typography>
-                    <Box sx={{ mb: 3 }}>
-                        {existingSchedules.length > 0 ? ( existingSchedules.map((s, index) => (
-                            // Use index if $oid is undefined, or s._id if it's already a string
-                            <Typography key={s._id.$oid || index} variant="body2" sx={{ my: 0.5 }}>
-                                • <b>{s.startDate}</b>: {s.powerOnTime} to {s.powerOffTime} ({s.recurrence})
-                            </Typography>
-                        ))
-                    ) : (
-                    <Typography variant="body2" color="text.secondary">No schedules set.</Typography>
-                    )}
-                    </Box>
-                    
-                    <Divider sx={{ my: 2 }} />
-                    
-                    {/* Add New Schedule */}
-                    <Typography variant="h6" sx={{ mb: 2 }}>Add New Schedule</Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField 
-                            label="Start Date" type="date" InputLabelProps={{ shrink: true }}
-                            fullWidth
-                            onChange={(e) => setScheduleData({...scheduleData, startDate: e.target.value})} 
-                        />
-                        <TextField 
-                            label="Power On Time" type="time" InputLabelProps={{ shrink: true }}
-                            fullWidth
-                            onChange={(e) => setScheduleData({...scheduleData, powerOnTime: e.target.value})} 
-                        />
-                        <TextField 
-                            label="Power Off Time" type="time" InputLabelProps={{ shrink: true }}
-                            fullWidth
-                            onChange={(e) => setScheduleData({...scheduleData, powerOffTime: e.target.value})} 
-                        />
-                        <Select 
-                            value={scheduleData.recurrence} 
-                            fullWidth
-                            onChange={(e) => setScheduleData({...scheduleData, recurrence: e.target.value})}
+   return (
+    <Container maxWidth={false} disableGutters>
+        <PageHeader title="Devices" breadcrumbItems={["Home", "Devices"]} />
+
+        <MaterialReactTable table={table} />
+
+        <Dialog
+            open={isScheduleDialogOpen}
+            onClose={handleScheduleClose}
+            maxWidth="md"
+            fullWidth
+        >
+        <DialogTitle>Schedule Action</DialogTitle>
+
+        <DialogContent dividers>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+                Recurring Schedule
+            </Typography>
+
+            <Stack spacing={3}>
+                <Stack direction="row" spacing={2}>
+                    <Box sx={{ flex: 1 }}>
+                        <Typography
+                            variant="body2"
+                            sx={{ mb: 0.5, fontWeight: 500 }}
                         >
-                            <MenuItem value="everyday">Everyday</MenuItem>
-                            <MenuItem value="workdays">Workdays</MenuItem>
-                            <MenuItem value="weekends">Weekends</MenuItem>
-                        </Select>
+                            Start date *
+                        </Typography>
+                        <TextField
+                            fullWidth
+                            type="date"
+                            value={scheduleData.startDate}
+                            onChange={(e) =>
+                                setScheduleData({
+                                    ...scheduleData,
+                                    startDate: e.target.value,
+                                })
+                             }
+                        />
                     </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleScheduleClose}>Cancel</Button>
-                    <Button onClick={handlePerformAction} color="primary">
-                        Schedule
+
+                    <Box sx={{ flex: 1 }}>
+                        <Typography
+                            variant="body2"
+                            sx={{ mb: 0.5, fontWeight: 500 }}
+                        >
+                            End date
+                        </Typography>
+
+                        <TextField
+                            fullWidth
+                            type="date"
+                            disabled
+                            helperText="Never expires"
+                        />
+                    </Box>
+                </Stack>
+
+
+                <Stack direction="row" spacing={2}>
+                    <Box sx={{ flex: 1 }}>
+                        <Typography
+                            variant="body2"
+                            sx={{ mb: 0.5, fontWeight: 500 }}
+                        >
+                            Power off time *
+                        </Typography>
+
+                        <TextField
+                            fullWidth
+                            type="time"
+                            value={scheduleData.powerOffTime}
+                            helperText="Example: 18:00"
+                            onChange={(e) =>
+                                setScheduleData({
+                                    ...scheduleData,
+                                    powerOffTime: e.target.value,
+                            })}
+                        />
+                    </Box>
+
+                    <Box sx={{ flex: 1 }}>
+                        <Typography
+                            variant="body2"
+                            sx={{ mb: 0.5, fontWeight: 500 }}
+                        >
+                            Power on time *
+                        </Typography>
+
+                            <TextField
+                                fullWidth
+                                type="time"
+                                value={scheduleData.powerOnTime}
+                                helperText="Example: 08:00"
+                                    onChange={(e) =>
+                                        setScheduleData({
+                                        ...scheduleData,
+                                        powerOnTime: e.target.value,
+                                })
+                            }
+                        />
+                    </Box>
+                </Stack>
+                    
+                    <FormControl component="fieldset">
+                        <FormLabel component="legend">
+                            Power off/on recurrence
+                        </FormLabel>
+
+                        <RadioGroup
+                            row
+                            value={scheduleData.recurrence}
+                            onChange={(e) =>
+                                setScheduleData({
+                                    ...scheduleData,
+                                    recurrence: e.target.value,
+                                })
+                            }
+                        >
+                            <FormControlLabel
+                                value="workdays"
+                                control={<Radio />}
+                                label="Workdays"
+                            />
+
+                            <FormControlLabel
+                                value="everyday"
+                                control={<Radio />}
+                                label="Everyday"
+                            />
+
+                            <FormControlLabel
+                                value="weekends"
+                                control={<Radio />}
+                                label="Weekends"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+                </Stack>
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Overview */}
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+                    Scheduling Overview
+                </Typography>
+
+                <Box
+                    sx={{
+                        border: "1px solid #ddd",
+                        borderRadius: 1,
+                        overflow: "hidden",
+                    }}
+                >
+                    <table
+                        style={{
+                            width: "100%",
+                            borderCollapse: "collapse",
+                            textAlign: "center",
+                        }}
+                    >
+                        <thead>
+                            <tr>
+                                {["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                                    (day) => (
+                                        <th
+                                            key={day}
+                                            style={{
+                                                padding: "10px",
+                                                borderBottom: "1px solid #ddd",
+                                                background: "#f7f7f7",
+                                            }}
+                                        >
+                                            {day}
+                                        </th>
+                                    )
+                                )}
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td
+                                    style={{
+                                        padding: "10px",
+                                        fontWeight: "bold",
+                                    }}
+                                >
+                                    Power On
+                                </td>
+
+                                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                                    <td key={i} style={{ padding: "10px" }}>
+                                        {scheduleData.powerOnTime || "--:--"}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td
+                                    style={{
+                                        padding: "10px",
+                                        fontWeight: "bold",
+                                    }}
+                                >
+                                    Power Off
+                                </td>
+
+                                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                                    <td key={i} style={{ padding: "10px" }}>
+                                        {scheduleData.powerOffTime || "--:--"}
+                                    </td>
+                                ))}
+                            </tr>
+                        </tbody>
+                    </table>
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ justifyContent: "space-between", px: 3, py: 2 }}>
+                <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => {
+                        /* remove schedule */
+                    }}
+                >
+                    Remove Schedule
+                </Button>
+
+                <Box>
+                    <Button onClick={handleScheduleClose} sx={{ mr: 1 }}>
+                        Cancel
                     </Button>
-                </DialogActions>
-            </Dialog>
-            <AddDeviceForm
-                open={isAddDialogOpen}
-                onClose={handleAddDialogClose}
-                onSuccess={handleAddDeviceSuccess}
-                deviceToEdit={deviceToEdit}
-            />
-            <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm Delete</DialogTitle>
-                <DialogContent>
-                    <Typography>
-                        Are you sure you want to delete the device "{deviceToDelete?.deviceName}"?
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={confirmDelete} color="error">
-                        Delete
+
+                    <Button
+                        variant="contained"
+                        onClick={handlePerformAction}
+                    >
+                        Save Schedule
                     </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
-    );
+                </Box>
+            </DialogActions>
+        </Dialog>
+
+        <AddDeviceForm
+            open={isAddDialogOpen}
+            onClose={handleAddDialogClose}
+            onSuccess={handleAddDeviceSuccess}
+            deviceToEdit={deviceToEdit}
+        />
+
+        <Dialog
+            open={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+        >
+            <DialogTitle>Confirm Delete</DialogTitle>
+
+            <DialogContent>
+                <Typography>
+                    Are you sure you want to delete the device "
+                    {deviceToDelete?.deviceName}"?
+                </Typography>
+            </DialogContent>
+
+            <DialogActions>
+                <Button onClick={() => setIsDeleteDialogOpen(false)}>
+                    Cancel
+                </Button>
+
+                <Button onClick={confirmDelete} color="error">
+                    Delete
+                </Button>
+            </DialogActions>
+        </Dialog>
+    </Container>
+);
 };
 
 export default DeviceTable;
