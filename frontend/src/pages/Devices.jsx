@@ -10,6 +10,8 @@ import {
     Typography,
     Divider,
     Box,
+    TextField,
+    Select
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
@@ -26,6 +28,13 @@ const DeviceTable = () => {
     const [deviceToEdit, setDeviceToEdit] = useState(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [deviceToDelete, setDeviceToDelete] = useState(null);
+    const [scheduleData, setScheduleData] = useState({
+        powerOnTime: "",
+        powerOffTime: "",
+        recurrence: "everyday",
+        startDate: ""
+    });
+    const [existingSchedules, setExistingSchedules] = useState([]);
 
     const fetchDevices = async () => {
         try {
@@ -44,16 +53,38 @@ const DeviceTable = () => {
         fetchDevices();
     }, []);
 
-    const handleScheduleOpen = (device) => {
+    const handleScheduleOpen = async (device) => {
         setSelectedDevice(device);
-        setIsScheduleDialogOpen(true);
         setSelectedAction("schedule");
-    };
+        setIsScheduleDialogOpen(true);
+        setExistingSchedules([]);
+    
+        try {
+            const id = device._id.$oid || device._id;
+            const response = await fetch(`/api/schedules/${id}`);
+        
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Fetched schedules:", data); // Check this in the browser console
+                setExistingSchedules(data);
+            } else {
+                console.error("Failed to fetch schedules, status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error fetching schedules:", error);
+        }
+};
 
     const handleScheduleClose = () => {
         setIsScheduleDialogOpen(false);
         setSelectedAction(null);
         setSelectedDevice(null);
+        setScheduleData({
+            powerOnTime: "",
+            powerOffTime: "",
+            recurrence: "everyday",
+            startDate: ""
+        });
     };
 
     const handleDeleteDevice = async (deviceId) => {
@@ -69,11 +100,11 @@ const DeviceTable = () => {
         }
     }
 
-    const handleAction = (action, device) => {
+    const handleAction = async (action, device) => {
+        setSelectedDevice(device);
         switch (action) {
             case "schedule":
-                setIsScheduleDialogOpen(true);
-                setSelectedAction("schedule");
+                await handleScheduleOpen(device);
                 break;
             case "edit":
                 setDeviceToEdit(device);
@@ -158,28 +189,42 @@ const DeviceTable = () => {
         ],
     });
 
-    const handlePerformAction = async () => {
-        if (!selectedDevice) return;
-        try {
-            switch (selectedAction) {
-                case "schedule":
-                    // Perform schedule action with selectedDevice._id
-                    console.log(`Scheduled action for device ${selectedDevice._id}`);
-                    break;
-                case "edit":
-                    // Perform edit action with selectedDevice._id
-                    break;
-                case "remove":
-                    // Perform remove action with selectedDevice._id
-                    break;
-                default:
-                    break;
+  const handlePerformAction = async () => {
+    console.log("handlePerformAction started");
+    if (!selectedDevice) {
+        console.log("No device selected");
+        return;
+    }
+    
+    try {
+        if (selectedAction === "schedule") {
+            const payload = {
+                deviceId: selectedDevice._id.$oid || selectedDevice._id,
+                ...scheduleData
+            };
+            console.log("Sending payload to backend:", payload); // Verify data
+
+
+            const response = await fetch("/api/schedules", {
+                method: "POST", 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            
+            console.log("Fetch call completed. Response status:", response.status);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Server Error Details:", errorData);
+                throw new Error(errorData.error || "Failed to save schedule");
             }
-            handleScheduleClose();
-        } catch (error) {
-            console.error("Error performing action:", error);
+            console.log("Schedule saved successfully!");
         }
-    };
+        handleScheduleClose();
+    } catch (error) {
+        console.error("Error performing action:", error);
+    }
+};
 
     const handleAddDialogOpen = () => {
         setIsAddDialogOpen(true);
@@ -208,9 +253,50 @@ const DeviceTable = () => {
             <MaterialReactTable table={table} />
             <Dialog open={isScheduleDialogOpen} onClose={handleScheduleClose}>
                 <DialogTitle>Schedule Action</DialogTitle>
-                <DialogContent>
-                    {/* Add content for scheduling here */}
-                    Schedule dialog content...
+                <DialogContent dividers>
+                    <Typography variant="h6">Current Schedules</Typography>
+                    <Box sx={{ mb: 3 }}>
+                        {existingSchedules.length > 0 ? ( existingSchedules.map((s, index) => (
+                            // Use index if $oid is undefined, or s._id if it's already a string
+                            <Typography key={s._id.$oid || index} variant="body2" sx={{ my: 0.5 }}>
+                                • <b>{s.startDate}</b>: {s.powerOnTime} to {s.powerOffTime} ({s.recurrence})
+                            </Typography>
+                        ))
+                    ) : (
+                    <Typography variant="body2" color="text.secondary">No schedules set.</Typography>
+                    )}
+                    </Box>
+                    
+                    <Divider sx={{ my: 2 }} />
+                    
+                    {/* Add New Schedule */}
+                    <Typography variant="h6" sx={{ mb: 2 }}>Add New Schedule</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField 
+                            label="Start Date" type="date" InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            onChange={(e) => setScheduleData({...scheduleData, startDate: e.target.value})} 
+                        />
+                        <TextField 
+                            label="Power On Time" type="time" InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            onChange={(e) => setScheduleData({...scheduleData, powerOnTime: e.target.value})} 
+                        />
+                        <TextField 
+                            label="Power Off Time" type="time" InputLabelProps={{ shrink: true }}
+                            fullWidth
+                            onChange={(e) => setScheduleData({...scheduleData, powerOffTime: e.target.value})} 
+                        />
+                        <Select 
+                            value={scheduleData.recurrence} 
+                            fullWidth
+                            onChange={(e) => setScheduleData({...scheduleData, recurrence: e.target.value})}
+                        >
+                            <MenuItem value="everyday">Everyday</MenuItem>
+                            <MenuItem value="workdays">Workdays</MenuItem>
+                            <MenuItem value="weekends">Weekends</MenuItem>
+                        </Select>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleScheduleClose}>Cancel</Button>
