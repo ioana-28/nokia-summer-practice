@@ -24,6 +24,8 @@ const DeviceTable = () => {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(null);
     const [deviceToEdit, setDeviceToEdit] = useState(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [deviceToDelete, setDeviceToDelete] = useState(null);
 
     const fetchDevices = async () => {
         try {
@@ -78,9 +80,8 @@ const DeviceTable = () => {
                 setIsAddDialogOpen(true);
                 break;
             case "remove":
-                if (window.confirm("Are you sure you want to delete this device?")) {
-                    handleDeleteDevice(device._id.$oid || device._id);
-                }
+                setDeviceToDelete(device);
+                setIsDeleteDialogOpen(true);
                 break;
             default:
                 break;
@@ -193,6 +194,14 @@ const DeviceTable = () => {
         fetchDevices();
     };
 
+    const confirmDelete = async () => {
+        if (deviceToDelete) {
+            await handleDeleteDevice(deviceToDelete._id.$oid || deviceToDelete._id);
+            setIsDeleteDialogOpen(false);
+            setDeviceToDelete(null);
+        }
+    };
+
     return (
         <Container maxWidth={false} disableGutters>
             <PageHeader title="Devices" breadcrumbItems={["Home", "Devices"]} />
@@ -216,6 +225,20 @@ const DeviceTable = () => {
                 onSuccess={handleAddDeviceSuccess}
                 deviceToEdit={deviceToEdit}
             />
+            <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete the device "{deviceToDelete?.deviceName}"?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={confirmDelete} color="error">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 };
