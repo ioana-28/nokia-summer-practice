@@ -22,6 +22,8 @@ const DeviceTable = () => {
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
     const [selectedAction, setSelectedAction] = useState(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isEdit, setIsEdit] = useState(null);
+    const [deviceToEdit, setDeviceToEdit] = useState(null);
 
     const fetchDevices = async () => {
         try {
@@ -52,21 +54,39 @@ const DeviceTable = () => {
         setSelectedDevice(null);
     };
 
+    const handleDeleteDevice = async (deviceId) => {
+        try {
+            const response = await fetch(`/api/device/${deviceId}`, {
+                method: "DELETE",
+            });
+            if (response.ok) 
+                fetchDevices();
+        }
+        catch (error) {
+            console.error("Error deleting device:", error);
+        }
+    }
+
     const handleAction = (action, device) => {
         switch (action) {
             case "schedule":
-                handleScheduleOpen(device);
+                setIsScheduleDialogOpen(true);
+                setSelectedAction("schedule");
                 break;
             case "edit":
-                // Handle edit action
+                setDeviceToEdit(device);
+                setIsAddDialogOpen(true);
                 break;
             case "remove":
-                // Handle remove action
+                if (window.confirm("Are you sure you want to delete this device?")) {
+                    handleDeleteDevice(device._id.$oid || device._id);
+                }
                 break;
             default:
                 break;
         }
     };
+
 
     const columns = useMemo(
         () => [
@@ -166,6 +186,7 @@ const DeviceTable = () => {
 
     const handleAddDialogClose = () => {
         setIsAddDialogOpen(false);
+        setDeviceToEdit(null);
     };
 
     const handleAddDeviceSuccess = () => {
@@ -193,6 +214,7 @@ const DeviceTable = () => {
                 open={isAddDialogOpen}
                 onClose={handleAddDialogClose}
                 onSuccess={handleAddDeviceSuccess}
+                deviceToEdit={deviceToEdit}
             />
         </Container>
     );
