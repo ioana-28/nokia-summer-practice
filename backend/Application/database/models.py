@@ -1,3 +1,5 @@
+from xml.dom.minidom import Document
+
 from bson.objectid import ObjectId
 from mongoengine import *
 
@@ -39,3 +41,10 @@ class DailySaving(EmbeddedDocument):
 class Saving(Document):
     deviceName = StringField(required=True, unique=True)
     log = EmbeddedDocumentListField(DailySaving)
+
+class Schedule(Document):
+    deviceId = ReferenceField(Device, required=True, unique=True)
+    powerOnTime = StringField(required=True)
+    powerOffTime = StringField(required=True)
+    recurrence = StringField(choices=['workdays', 'everyday', 'weekends'], required=True)
+    startDate = StringField(required=True)

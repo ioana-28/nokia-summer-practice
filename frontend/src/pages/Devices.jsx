@@ -7,20 +7,18 @@ import {
     DialogActions,
     Button,
     Container,
-    Typography,
-    Divider,
-    Box,
+    Typography
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
 import AddDeviceForm from "../components/AddDeviceForm";
 import PageHeader from "../components/PageHeader";
+import ScheduleDialog from "../components/ScheduleDialog";
 
 const DeviceTable = () => {
     const [devices, setDevices] = useState([]);
-    const [selectedDevice, setSelectedDevice] = useState(null);
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
-    const [selectedAction, setSelectedAction] = useState(null);
+    const [scheduleDevice, setScheduleDevice] = useState(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(null);
     const [deviceToEdit, setDeviceToEdit] = useState(null);
@@ -45,15 +43,13 @@ const DeviceTable = () => {
     }, []);
 
     const handleScheduleOpen = (device) => {
-        setSelectedDevice(device);
+        setScheduleDevice(device);
         setIsScheduleDialogOpen(true);
-        setSelectedAction("schedule");
     };
 
     const handleScheduleClose = () => {
         setIsScheduleDialogOpen(false);
-        setSelectedAction(null);
-        setSelectedDevice(null);
+        setScheduleDevice(null);
     };
 
     const handleDeleteDevice = async (deviceId) => {
@@ -69,11 +65,10 @@ const DeviceTable = () => {
         }
     }
 
-    const handleAction = (action, device) => {
+    const handleAction = async (action, device) => {
         switch (action) {
             case "schedule":
-                setIsScheduleDialogOpen(true);
-                setSelectedAction("schedule");
+                handleScheduleOpen(device);
                 break;
             case "edit":
                 setDeviceToEdit(device);
@@ -158,28 +153,7 @@ const DeviceTable = () => {
         ],
     });
 
-    const handlePerformAction = async () => {
-        if (!selectedDevice) return;
-        try {
-            switch (selectedAction) {
-                case "schedule":
-                    // Perform schedule action with selectedDevice._id
-                    console.log(`Scheduled action for device ${selectedDevice._id}`);
-                    break;
-                case "edit":
-                    // Perform edit action with selectedDevice._id
-                    break;
-                case "remove":
-                    // Perform remove action with selectedDevice._id
-                    break;
-                default:
-                    break;
-            }
-            handleScheduleClose();
-        } catch (error) {
-            console.error("Error performing action:", error);
-        }
-    };
+   
 
     const handleAddDialogOpen = () => {
         setIsAddDialogOpen(true);
@@ -202,45 +176,51 @@ const DeviceTable = () => {
         }
     };
 
-    return (
-        <Container maxWidth={false} disableGutters>
-            <PageHeader title="Devices" breadcrumbItems={["Home", "Devices"]} />
-            <MaterialReactTable table={table} />
-            <Dialog open={isScheduleDialogOpen} onClose={handleScheduleClose}>
-                <DialogTitle>Schedule Action</DialogTitle>
-                <DialogContent>
-                    {/* Add content for scheduling here */}
-                    Schedule dialog content...
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleScheduleClose}>Cancel</Button>
-                    <Button onClick={handlePerformAction} color="primary">
-                        Schedule
-                    </Button>
-                </DialogActions>
-            </Dialog>
-            <AddDeviceForm
-                open={isAddDialogOpen}
-                onClose={handleAddDialogClose}
-                onSuccess={handleAddDeviceSuccess}
-                deviceToEdit={deviceToEdit}
-            />
-            <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm Delete</DialogTitle>
-                <DialogContent>
-                    <Typography>
-                        Are you sure you want to delete the device "{deviceToDelete?.deviceName}"?
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={confirmDelete} color="error">
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
-    );
+   return (
+    <Container maxWidth={false} disableGutters>
+        <PageHeader title="Devices" breadcrumbItems={["Home", "Devices"]} />
+
+        <MaterialReactTable table={table} />
+
+        <ScheduleDialog
+            open={isScheduleDialogOpen}
+            device={scheduleDevice}
+            onClose={handleScheduleClose}
+            onSuccess={fetchDevices}
+        />
+
+        <AddDeviceForm
+            open={isAddDialogOpen}
+            onClose={handleAddDialogClose}
+            onSuccess={handleAddDeviceSuccess}
+            deviceToEdit={deviceToEdit}
+        />
+
+        <Dialog
+            open={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+        >
+            <DialogTitle>Confirm Delete</DialogTitle>
+
+            <DialogContent>
+                <Typography>
+                    Are you sure you want to delete the device "
+                    {deviceToDelete?.deviceName}"?
+                </Typography>
+            </DialogContent>
+
+            <DialogActions>
+                <Button onClick={() => setIsDeleteDialogOpen(false)}>
+                    Cancel
+                </Button>
+
+                <Button onClick={confirmDelete} color="error">
+                    Delete
+                </Button>
+            </DialogActions>
+        </Dialog>
+    </Container>
+);
 };
 
 export default DeviceTable;
