@@ -71,7 +71,7 @@ const DeviceTable = () => {
         
             if (response.ok) {
                 const data = await response.json();
-                console.log("Fetched schedules:", data); // Check this in the browser console
+                console.log("Fetched schedules:", data);
                 setExistingSchedules(data);
             } else {
                 console.error("Failed to fetch schedules, status:", response.status);
@@ -208,7 +208,7 @@ const DeviceTable = () => {
                 deviceId: selectedDevice._id.$oid || selectedDevice._id,
                 ...scheduleData
             };
-            console.log("Sending payload to backend:", payload); // Verify data
+            console.log("Sending payload to backend:", payload);
 
 
             const response = await fetch("/api/schedules", {
@@ -217,7 +217,7 @@ const DeviceTable = () => {
                 body: JSON.stringify(payload),
             });
             
-            console.log("Fetch call completed. Response status:", response.status);
+            console.log("Fetch call completed");
             
             if (!response.ok) {
                 const errorData = await response.json();
@@ -294,21 +294,6 @@ const DeviceTable = () => {
                         />
                     </Box>
 
-                    <Box sx={{ flex: 1 }}>
-                        <Typography
-                            variant="body2"
-                            sx={{ mb: 0.5, fontWeight: 500 }}
-                        >
-                            End date
-                        </Typography>
-
-                        <TextField
-                            fullWidth
-                            type="date"
-                            disabled
-                            helperText="Never expires"
-                        />
-                    </Box>
                 </Stack>
 
 
