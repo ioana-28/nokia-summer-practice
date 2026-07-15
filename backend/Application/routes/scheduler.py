@@ -22,3 +22,13 @@ def get_schedules(deviceId):
         return jsonify(json.loads(schedules.to_json())), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+
+@app.route('/schedules/<scheduleId>', methods=['DELETE'])
+def delete_schedule(scheduleId):
+    try:
+        Schedule.objects(id=scheduleId).delete()
+        return jsonify({'message': 'Schedule deleted'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
