@@ -24,11 +24,18 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
         recurrence: "everyday",
         startDate: ""
     });
-    const [existingSchedules, setExistingSchedules] = useState([]);
+    const [existingSchedule, setExistingSchedule] = useState(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     useEffect(() => {
         if (open && device) {
-            setExistingSchedules([]);
+            setScheduleData({
+                powerOnTime: "",
+                powerOffTime: "",
+                recurrence: "everyday",
+                startDate: ""
+            });
+            setExistingSchedule(null);
             fetchSchedules(device);
         }
     }, [open, device]);
@@ -40,8 +47,17 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log("Fetched schedules:", data);
-                setExistingSchedules(data);
+                console.log("Fetched schedule:", data);
+                const schedule = data.length > 0 ? data[0] : null;
+                setExistingSchedule(schedule);
+                if (schedule) {
+                    setScheduleData({
+                        powerOnTime: schedule.powerOnTime || "",
+                        powerOffTime: schedule.powerOffTime || "",
+                        recurrence: schedule.recurrence || "everyday",
+                        startDate: schedule.startDate || ""
+                    });
+                }
             } else {
                 console.error("Failed to fetch schedules, status:", response.status);
             }
@@ -57,7 +73,7 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
             recurrence: "everyday",
             startDate: ""
         });
-        setExistingSchedules([]);
+        setExistingSchedule(null);
         onClose();
     };
 
@@ -74,14 +90,13 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
     };
 
     const getEffectiveSchedule = (dayIndex, type) => {
-        if (existingSchedules.length > 0) {
-            const s = existingSchedules[existingSchedules.length - 1];
+        if (existingSchedule) {
             let isScheduled = false;
-            if (s.recurrence === "everyday") isScheduled = true;
-            else if (s.recurrence === "workdays") isScheduled = dayIndex >= 0 && dayIndex <= 4;
-            else if (s.recurrence === "weekends") isScheduled = dayIndex === 5 || dayIndex === 6;
+            if (existingSchedule.recurrence === "everyday") isScheduled = true;
+            else if (existingSchedule.recurrence === "workdays") isScheduled = dayIndex >= 0 && dayIndex <= 4;
+            else if (existingSchedule.recurrence === "weekends") isScheduled = dayIndex === 5 || dayIndex === 6;
 
-            return isScheduled ? (type === 'on' ? s.powerOnTime : s.powerOffTime) : "--:--";
+            return isScheduled ? (type === 'on' ? existingSchedule.powerOnTime : existingSchedule.powerOffTime) : "--:--";
         }
         return getScheduleDisplay(dayIndex, type);
     };
@@ -118,6 +133,38 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
         } catch (error) {
             console.error("Error saving schedule:", error);
         }
+    };
+
+    const handleRemoveSchedule = async () => {
+        if (!existingSchedule) {
+            console.log("No existing schedule to remove");
+            return;
+        }
+        
+        const scheduleId = existingSchedule._id.$oid || existingSchedule._id;
+        try {
+            const response = await fetch(`/api/schedules/${scheduleId}`, {
+                method: "DELETE",
+            });
+            
+            if (response.ok) {
+                onSuccess();
+                handleClose();
+            }
+        }
+        catch (error) {
+            console.error("Error removing schedule:", error);
+        }
+    };
+
+
+    const confirmRemoveSchedule = () => {
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        setIsDeleteDialogOpen(false);
+        await handleRemoveSchedule(); 
     };
 
     return (
@@ -314,9 +361,7 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
                 <Button
                     variant="outlined"
                     color="error"
-                    onClick={() => {
-                        /* remove schedule */
-                    }}
+                    onClick={() => {confirmRemoveSchedule();}}
                 >
                     Remove Schedule
                 </Button>
@@ -334,6 +379,21 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
                     </Button>
                 </Box>
             </DialogActions>
+            <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
+                <DialogTitle>Confirm Removal</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to remove the current schedule for this device? 
+                        This action cannot be undone.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleDeleteConfirmed} color="error" variant="contained">
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     );
 };

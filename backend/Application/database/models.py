@@ -43,7 +43,7 @@ class Saving(Document):
     log = EmbeddedDocumentListField(DailySaving)
 
 class Schedule(Document):
-    deviceId = ReferenceField(Device, required=True)
+    deviceId = ReferenceField(Device, required=True, unique=True)
     powerOnTime = StringField(required=True)
     powerOffTime = StringField(required=True)
     recurrence = StringField(choices=['workdays', 'everyday', 'weekends'], required=True)
