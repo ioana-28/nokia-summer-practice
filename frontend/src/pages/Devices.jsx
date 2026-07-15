@@ -79,7 +79,7 @@ const DeviceTable = () => {
         } catch (error) {
             console.error("Error fetching schedules:", error);
         }
-};
+    };
 
     const handleScheduleClose = () => {
         setIsScheduleDialogOpen(false);
@@ -91,6 +91,18 @@ const DeviceTable = () => {
             recurrence: "everyday",
             startDate: ""
         });
+    };
+
+    const getScheduleDisplay = (dayIndex, type) => {
+        const { recurrence, powerOnTime, powerOffTime } = scheduleData;
+        let isScheduled = false;
+
+        if (recurrence === "everyday") isScheduled = true;
+        else if (recurrence === "workdays") isScheduled = dayIndex >= 0 && dayIndex <= 4; // Mon-Fri
+        else if (recurrence === "weekends") isScheduled = dayIndex === 5 || dayIndex === 6; // Sat-Sun
+
+        if (!isScheduled) return "--:--";
+        return type === 'on' ? (powerOnTime || "--:--") : (powerOffTime || "--:--");
     };
 
     const handleDeleteDevice = async (deviceId) => {
@@ -195,19 +207,20 @@ const DeviceTable = () => {
         ],
     });
 
-  const handlePerformAction = async () => {
-    console.log("handlePerformAction started");
-    if (!selectedDevice) {
-        console.log("No device selected");
-        return;
-    }
+    const handlePerformAction = async () => {
+        console.log("handlePerformAction started");
+        if (!selectedDevice) {
+            console.log("No device selected");
+            return;
+        }
     
-    try {
-        if (selectedAction === "schedule") {
-            const payload = {
-                deviceId: selectedDevice._id.$oid || selectedDevice._id,
-                ...scheduleData
-            };
+    
+        try {
+            if (selectedAction === "schedule") {
+                const payload = {
+                    deviceId: selectedDevice._id.$oid || selectedDevice._id,
+                    ...scheduleData
+                };
             console.log("Sending payload to backend:", payload);
 
 
@@ -219,18 +232,18 @@ const DeviceTable = () => {
             
             console.log("Fetch call completed");
             
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error("Server Error Details:", errorData);
-                throw new Error(errorData.error || "Failed to save schedule");
+             if (!response.ok) {
+                  const errorData = await response.json();
+                  console.error("Server Error Details:", errorData);
+                  throw new Error(errorData.error || "Failed to save schedule");
+                }
+                console.log("Schedule saved successfully!");
             }
-            console.log("Schedule saved successfully!");
+            handleScheduleClose();
+        } catch (error) {
+            console.error("Error performing action:", error);
         }
-        handleScheduleClose();
-    } catch (error) {
-        console.error("Error performing action:", error);
     }
-};
 
     const handleAddDialogOpen = () => {
         setIsAddDialogOpen(true);
@@ -431,7 +444,7 @@ const DeviceTable = () => {
 
                                 {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                                     <td key={i} style={{ padding: "10px" }}>
-                                        {scheduleData.powerOnTime || "--:--"}
+                                        {getScheduleDisplay(i - 1, 'on')}
                                     </td>
                                 ))}
                             </tr>
@@ -448,7 +461,7 @@ const DeviceTable = () => {
 
                                 {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                                     <td key={i} style={{ padding: "10px" }}>
-                                        {scheduleData.powerOffTime || "--:--"}
+                                        {getScheduleDisplay(i - 1, 'off')}
                                     </td>
                                 ))}
                             </tr>
