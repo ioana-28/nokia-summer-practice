@@ -81,6 +81,8 @@ const DeviceTable = () => {
         }
     };
 
+   
+
     const handleScheduleClose = () => {
         setIsScheduleDialogOpen(false);
         setSelectedAction(null);
@@ -104,6 +106,56 @@ const DeviceTable = () => {
         if (!isScheduled) return "--:--";
         return type === 'on' ? (powerOnTime || "--:--") : (powerOffTime || "--:--");
     };
+
+    const getEffectiveSchedule = (dayIndex, type) => {
+        if (existingSchedules.length > 0) {
+            const s = existingSchedules[existingSchedules.length - 1];
+            let isScheduled = false;
+            if (s.recurrence === "everyday") isScheduled = true;
+            else if (s.recurrence === "workdays") isScheduled = dayIndex >= 0 && dayIndex <= 4;
+            else if (s.recurrence === "weekends") isScheduled = dayIndex === 5 || dayIndex === 6;
+        
+            return isScheduled ? (type === 'on' ? s.powerOnTime : s.powerOffTime) : "--:--";
+        }
+        return getScheduleDisplay(dayIndex, type);
+    };
+    
+
+    const handlePerformAction = async () => {
+        console.log("handlePerformAction started");
+        if (!selectedDevice) {
+            console.log("No device selected");
+            return;
+        }
+        try {
+            if (selectedAction === "schedule") {
+                const payload = {
+                    deviceId: selectedDevice._id.$oid || selectedDevice._id,
+                    ...scheduleData
+                };
+            console.log("Sending payload to backend:", payload);
+
+
+            const response = await fetch("/api/schedules", {
+                method: "POST", 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            
+            console.log("Fetch call completed");
+            
+             if (!response.ok) {
+                  const errorData = await response.json();
+                  console.error("Server Error Details:", errorData);
+                  throw new Error(errorData.error || "Failed to save schedule");
+                }
+                console.log("Schedule saved successfully!");
+            }
+            handleScheduleClose();
+        } catch (error) {
+            console.error("Error performing action:", error);
+        }
+    }
 
     const handleDeleteDevice = async (deviceId) => {
         try {
@@ -207,43 +259,7 @@ const DeviceTable = () => {
         ],
     });
 
-    const handlePerformAction = async () => {
-        console.log("handlePerformAction started");
-        if (!selectedDevice) {
-            console.log("No device selected");
-            return;
-        }
-    
-    
-        try {
-            if (selectedAction === "schedule") {
-                const payload = {
-                    deviceId: selectedDevice._id.$oid || selectedDevice._id,
-                    ...scheduleData
-                };
-            console.log("Sending payload to backend:", payload);
-
-
-            const response = await fetch("/api/schedules", {
-                method: "POST", 
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-            
-            console.log("Fetch call completed");
-            
-             if (!response.ok) {
-                  const errorData = await response.json();
-                  console.error("Server Error Details:", errorData);
-                  throw new Error(errorData.error || "Failed to save schedule");
-                }
-                console.log("Schedule saved successfully!");
-            }
-            handleScheduleClose();
-        } catch (error) {
-            console.error("Error performing action:", error);
-        }
-    }
+   
 
     const handleAddDialogOpen = () => {
         setIsAddDialogOpen(true);
@@ -444,7 +460,7 @@ const DeviceTable = () => {
 
                                 {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                                     <td key={i} style={{ padding: "10px" }}>
-                                        {getScheduleDisplay(i - 1, 'on')}
+                                        {getEffectiveSchedule(i - 1, 'on')}
                                     </td>
                                 ))}
                             </tr>
@@ -461,7 +477,7 @@ const DeviceTable = () => {
 
                                 {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                                     <td key={i} style={{ padding: "10px" }}>
-                                        {getScheduleDisplay(i - 1, 'off')}
+                                        {getEffectiveSchedule(i - 1, 'off')}
                                     </td>
                                 ))}
                             </tr>
