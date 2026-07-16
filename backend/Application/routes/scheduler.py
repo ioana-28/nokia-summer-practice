@@ -17,6 +17,7 @@ def add_schedule():
             existing.powerOffTime = data.get('powerOffTime', existing.powerOffTime)
             existing.recurrence = data.get('recurrence', existing.recurrence)
             existing.startDate = data.get('startDate', existing.startDate)
+            existing.consumptionPerHour = data.get('consumptionPerHour', existing.consumptionPerHour)
             existing.save()
             return jsonify({'message': 'Schedule updated successfully'}), 200
         else:
@@ -30,6 +31,7 @@ def add_schedule():
             existing.powerOffTime = data.get('powerOffTime', existing.powerOffTime)
             existing.recurrence = data.get('recurrence', existing.recurrence)
             existing.startDate = data.get('startDate', existing.startDate)
+            existing.consumptionPerHour = data.get('consumptionPerHour', existing.consumptionPerHour)
             existing.save()
             return jsonify({'message': 'Schedule updated successfully'}), 200
         return jsonify({'error': 'Failed to save schedule'}), 409

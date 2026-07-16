@@ -22,7 +22,8 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
         powerOnTime: "",
         powerOffTime: "",
         recurrence: "everyday",
-        startDate: ""
+        startDate: "",
+        consumptionPerHour: ""
     });
     const [existingSchedule, setExistingSchedule] = useState(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -33,7 +34,8 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
                 powerOnTime: "",
                 powerOffTime: "",
                 recurrence: "everyday",
-                startDate: ""
+                startDate: "",
+                consumptionPerHour: ""
             });
             setExistingSchedule(null);
             fetchSchedules(device);
@@ -55,7 +57,8 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
                         powerOnTime: schedule.powerOnTime || "",
                         powerOffTime: schedule.powerOffTime || "",
                         recurrence: schedule.recurrence || "everyday",
-                        startDate: schedule.startDate || ""
+                        startDate: schedule.startDate || "",
+                        consumptionPerHour: schedule.consumptionPerHour || ""
                     });
                 }
             } else {
@@ -71,7 +74,8 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
             powerOnTime: "",
             powerOffTime: "",
             recurrence: "everyday",
-            startDate: ""
+            startDate: "",
+            consumptionPerHour: ""
         });
         setExistingSchedule(null);
         onClose();
@@ -277,6 +281,24 @@ const ScheduleDialog = ({ open, device, onClose, onSuccess }) => {
                             />
                         </RadioGroup>
                     </FormControl>
+
+                    <Box sx={{ maxWidth: 300 }}>
+                        <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                            Consumption per hour (kWh/h)
+                        </Typography>
+                        <TextField
+                            fullWidth
+                            type="number"
+                            placeholder="e.g. 2.5"
+                            value={scheduleData.consumptionPerHour}
+                            onChange={(e) =>
+                                setScheduleData({
+                                    ...scheduleData,
+                                    consumptionPerHour: e.target.value,
+                                })
+                            }
+                        />
+                    </Box>
                 </Stack>
 
                 <Divider sx={{ my: 3 }} />

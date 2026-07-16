@@ -26,10 +26,7 @@ class Device(Document):
     password = StringField(required=False)
     readCommunity = StringField(required=False)
     writeCommunity = StringField(required=False)
-    powerOnTime = StringField(required=False)  # format: "HH:MM"
-    powerOffTime = StringField(required=False)  # format: "HH:MM"
     count = IntField(required=False, default=1)  # câte dispozitive de acest tip
-    consumptionPerHour = FloatField(required=False)  # kWh per hour
     
 
 class DailySaving(EmbeddedDocument):
@@ -44,7 +41,8 @@ class Saving(Document):
 
 class Schedule(Document):
     deviceId = ReferenceField(Device, required=True, unique=True)
-    powerOnTime = StringField(required=True)
-    powerOffTime = StringField(required=True)
+    powerOnTime = StringField(required=True) # format: "HH:MM"
+    powerOffTime = StringField(required=True) # format: "HH:MM"
     recurrence = StringField(choices=['workdays', 'everyday', 'weekends'], required=True)
     startDate = StringField(required=True)
+    consumptionPerHour = FloatField(required=False) # kWh per hour

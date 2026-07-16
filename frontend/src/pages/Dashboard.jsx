@@ -13,33 +13,29 @@ import {
 import { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
 
-const weeklyPowerUsage = [
-    { day: "Mon", usage: 42.5, saved: 8.2 },
-    { day: "Tue", usage: 38.1, saved: 9.5 },
-    { day: "Wed", usage: 45.3, saved: 7.8 },
-    { day: "Thu", usage: 41.0, saved: 10.1 },
-    { day: "Fri", usage: 36.7, saved: 11.4 },
-    { day: "Sat", usage: 28.4, saved: 12.6 },
-    { day: "Sun", usage: 25.9, saved: 13.2 },
-];
-
 function Dashboard() {
     const [deviceCount, setDeviceCount] = useState(0);
     const [scheduleCount, setScheduleCount] = useState(0);
+    const [savingsData, setSavingsData] = useState([]);
 
     useEffect(() => {
-        Promise.all([
-            fetch("/api/devices"),
-            fetch("/api/schedules"),
-        ])
-            .then(([devicesRes, schedulesRes]) =>
-                Promise.all([devicesRes.json(), schedulesRes.json()])
-            )
-            .then(([devices, schedules]) => {
-                setDeviceCount(devices.length);
-                setScheduleCount(schedules.length);
+        fetch("/api/devices")
+            .then((r) => r.json())
+            .then((data) => setDeviceCount(data.length))
+            .catch((e) => console.error("Failed to fetch devices:", e));
+
+        fetch("/api/schedules")
+            .then((r) => r.json())
+            .then((data) => setScheduleCount(data.length))
+            .catch((e) => console.error("Failed to fetch schedules:", e));
+
+        fetch("/api/savings/summary?days=7")
+            .then((r) => r.json())
+            .then((data) => {
+                console.log("Savings data received:", data);
+                setSavingsData(data);
             })
-            .catch(console.error);
+            .catch((e) => console.error("Failed to fetch savings:", e));
     }, []);
 
     const stats = [
@@ -89,50 +85,33 @@ function Dashboard() {
             <Card elevation={2} sx={{ mt: 3 }}>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>
-                        Power Usage This Week
+                        Savings Performance (Last 7 Days)
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Daily consumption (kWh) across all registered devices
+                        Daily energy savings (kWh) across all registered devices
                     </Typography>
                     <Box sx={{ width: "100%", height: 320 }}>
                         <ResponsiveContainer>
-                            <AreaChart data={weeklyPowerUsage} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                            <AreaChart data={savingsData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                                 <defs>
-                                    <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#ed6c02" stopOpacity={0.4} />
-                                        <stop offset="95%" stopColor="#ed6c02" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="savedGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#2e7d32" stopOpacity={0.4} />
                                         <stop offset="95%" stopColor="#2e7d32" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                                 <YAxis
                                     tick={{ fontSize: 12 }}
                                     label={{ value: "kWh", angle: -90, position: "insideLeft", style: { fontSize: 12 } }}
                                 />
-                                <Tooltip
-                                    formatter={(value, name) => [
-                                        `${value} kWh`,
-                                        name === "usage" ? "Consumption" : "Saved",
-                                    ]}
-                                />
+                                <Tooltip formatter={(value) => [`${value} kWh`, "Saved"]} />
                                 <Area
                                     type="monotone"
-                                    dataKey="usage"
-                                    name="usage"
-                                    stroke="#ed6c02"
-                                    fill="url(#usageGradient)"
-                                    strokeWidth={2}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="saved"
-                                    name="saved"
+                                    dataKey="totalSaved"
+                                    name="totalSaved"
                                     stroke="#2e7d32"
-                                    fill="url(#savedGradient)"
+                                    fill="url(#savingsGradient)"
                                     strokeWidth={2}
                                 />
                             </AreaChart>
