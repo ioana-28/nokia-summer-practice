@@ -1,7 +1,6 @@
 import { Box, Card, CardContent, Container, Grid, Typography } from "@mui/material";
 import DevicesIcon from "@mui/icons-material/Devices";
-import BoltIcon from "@mui/icons-material/Bolt";
-import EnergySavingsLeafIcon from "@mui/icons-material/EnergySavingsLeaf";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import {
     Area,
     AreaChart,
@@ -11,6 +10,7 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
+import { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
 
 const weeklyPowerUsage = [
@@ -23,38 +23,49 @@ const weeklyPowerUsage = [
     { day: "Sun", usage: 25.9, saved: 13.2 },
 ];
 
-const stats = [
-    {
-        label: "Registered Devices",
-        value: "24",
-        unit: "devices",
-        icon: <DevicesIcon sx={{ fontSize: 40 }} />,
-        color: "primary.main",
-    },
-    {
-        label: "Total Power Consumption",
-        value: "257.9",
-        unit: "kWh this week",
-        icon: <BoltIcon sx={{ fontSize: 40 }} />,
-        color: "warning.main",
-    },
-    {
-        label: "Energy Saved",
-        value: "72.8",
-        unit: "kWh this week",
-        icon: <EnergySavingsLeafIcon sx={{ fontSize: 40 }} />,
-        color: "success.main",
-    },
-];
-
 function Dashboard() {
+    const [deviceCount, setDeviceCount] = useState(0);
+    const [scheduleCount, setScheduleCount] = useState(0);
+
+    useEffect(() => {
+        Promise.all([
+            fetch("/api/devices"),
+            fetch("/api/schedules"),
+        ])
+            .then(([devicesRes, schedulesRes]) =>
+                Promise.all([devicesRes.json(), schedulesRes.json()])
+            )
+            .then(([devices, schedules]) => {
+                setDeviceCount(devices.length);
+                setScheduleCount(schedules.length);
+            })
+            .catch(console.error);
+    }, []);
+
+    const stats = [
+        {
+            label: "Total Devices",
+            value: deviceCount,
+            unit: "devices",
+            icon: <DevicesIcon sx={{ fontSize: 40 }} />,
+            color: "primary.main",
+        },
+        {
+            label: "Active Schedules",
+            value: scheduleCount,
+            unit: "schedules",
+            icon: <CalendarMonthIcon sx={{ fontSize: 40 }} />,
+            color: "success.main",
+        },
+    ];
+
     return (
         <Container maxWidth={false} disableGutters>
             <PageHeader title="Dashboard" breadcrumbItems={["Home", "Dashboard"]} />
 
             <Grid container spacing={3} sx={{ mt: 1 }}>
                 {stats.map(({ label, value, unit, icon, color }) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={label}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={label}>
                         <Card elevation={2} sx={{ height: "100%" }}>
                             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                                 <Box sx={{ color }}>{icon}</Box>

@@ -37,6 +37,14 @@ def add_schedule():
         return jsonify({'error': str(e)}), 400  
 
 
+@app.route('/schedules', methods=['GET'])
+def get_all_schedules():
+    try:
+        schedules = Schedule.objects()
+        return jsonify(json.loads(schedules.to_json())), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/schedules/<deviceId>', methods=['GET'])
 def get_schedules(deviceId):
     try:
