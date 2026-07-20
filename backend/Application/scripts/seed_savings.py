@@ -3,7 +3,7 @@ from random import uniform
 from Application.database.models import Device, Schedule, Saving, DailySaving
 
 
-def seed_savings(days=7):
+def seed_savings(days=90):
     devices = Device.objects()
     today = datetime.now()
 

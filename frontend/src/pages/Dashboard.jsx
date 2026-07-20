@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Container, Grid, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Container, Grid, Typography } from "@mui/material";
 import DevicesIcon from "@mui/icons-material/Devices";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import {
@@ -13,10 +13,18 @@ import {
 import { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
 
+const RANGE_OPTIONS = [
+    { label: "3 Days", days: 3 },
+    { label: "7 Days", days: 7 },
+    { label: "30 Days", days: 30 },
+    { label: "90 Days", days: 90 },
+];
+
 function Dashboard() {
     const [deviceCount, setDeviceCount] = useState(0);
     const [scheduleCount, setScheduleCount] = useState(0);
     const [savingsData, setSavingsData] = useState([]);
+    const [rangeDays, setRangeDays] = useState(7);
 
     useEffect(() => {
         fetch("/api/devices")
@@ -28,15 +36,17 @@ function Dashboard() {
             .then((r) => r.json())
             .then((data) => setScheduleCount(data.length))
             .catch((e) => console.error("Failed to fetch schedules:", e));
+    }, []);
 
-        fetch("/api/savings/summary?days=7")
+    useEffect(() => {
+        fetch(`/api/savings/summary?days=${rangeDays}`)
             .then((r) => r.json())
             .then((data) => {
                 console.log("Savings data received:", data);
                 setSavingsData(data);
             })
             .catch((e) => console.error("Failed to fetch savings:", e));
-    }, []);
+    }, [rangeDays]);
 
     const stats = [
         {
@@ -84,9 +94,23 @@ function Dashboard() {
 
             <Card elevation={2} sx={{ mt: 3 }}>
                 <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                        Savings Performance (Last 7 Days)
-                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                        <Typography variant="h6">
+                            Savings Performance (Last {rangeDays} Days)
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                            {RANGE_OPTIONS.map(({ label, days }) => (
+                                <Button
+                                    key={days}
+                                    size="small"
+                                    variant={rangeDays === days ? "contained" : "outlined"}
+                                    onClick={() => setRangeDays(days)}
+                                >
+                                    {label}
+                                </Button>
+                            ))}
+                        </Box>
+                    </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Daily energy savings (kWh) across all registered devices
                     </Typography>
